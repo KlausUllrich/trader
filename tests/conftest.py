@@ -7,6 +7,16 @@ from trader.config import load_config
 
 @pytest.fixture
 def cfg():
+    """The example config, but voting on the 1h bars themselves (short synthetic series)."""
+    c = load_config("config.example.yaml")
+    c["signal"].pop("timeframe", None)
+    c["exits"].pop("max_days", None)
+    return c
+
+
+@pytest.fixture
+def daily_cfg():
+    """The example config as shipped: votes on daily bars."""
     return load_config("config.example.yaml")
 
 

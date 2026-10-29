@@ -44,7 +44,7 @@ def evaluate(df: pd.DataFrame, inst: dict, cfg: dict) -> dict | None:
         "instrument": inst["name"], "time": df.index[-1], "direction": d,
         "agree": int(last["agree"]), "agreeing": last["agreeing"], "size": float(last["size"]),
         "entry": entry, "stop": stop, "target": target, "units": units, "risk": at_risk,
-        "max_bars": cfg["exits"]["max_bars"],
+        "max_bars": backtest.max_bars(df, cfg["exits"]),
     }
 
 

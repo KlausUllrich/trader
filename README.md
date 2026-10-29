@@ -9,12 +9,14 @@ Pure Python, runs on Linux, macOS and Windows.
 
 ## How a signal is made
 
-1. **Three independent strategies** vote on every closed bar (+1 long, -1 short, 0 neutral):
+1. **Three independent strategies** vote on every closed daily bar (+1 long, -1 short, 0 neutral).
+   The scan still runs hourly and sends the signal on the first hourly bar after the daily close.
+   Voting on the 1h bars themselves had no edge, see [Results so far](#results-so-far):
    - `trend`: price and EMA 50 on the same side of EMA 200
    - `breakout`: a 20 bar range breakout in the last 5 bars, confirmed by 24 bar momentum
    - `pullback`: RSI turning back up through 40 (or down through 60)
 2. **Consensus**: 3 agree means full size, 2 agree with none opposing means half size, anything else means no signal.
-3. **Exits are fixed upfront**: stop at 2 ATR, target at 3 ATR, time stop after 48 bars, optional trailing stop.
+3. **Exits are fixed upfront**: stop at 2 daily ATR, target at 3 daily ATR, time stop after 15 days, optional trailing stop.
 4. **Risk**: 1% of capital on a full-size signal, capped by ActivTrades' retail leverage per asset class,
    at most 4 open positions, no new signals after a 3% losing day, and a hard stop at the configured max drawdown.
 
@@ -93,5 +95,19 @@ signals with the backtest before risking real money.
 
 Sanity check: on random-walk data the tool correctly finds no edge (profit factor
 about 0.8 after costs, verdict FAIL). A strategy that looks great on noise would be a bug.
+
+## Results so far
+
+Same rules and costs, data up to 2026-10-29, judged on the held-out last 30%:
+
+| Votes on | OOS trades | Profit factor | P&L | Max DD | Verdict |
+|---|---|---|---|---|---|
+| 1h bars | 923 | 0.84 | -$4,652 | $5,061 | FAIL |
+| daily bars | 68 | 1.20 | +$326 | $411 | FAIL (too few trades) |
+
+Daily voting was picked from five ideas tested on the in-sample part only, then
+checked once on the held-out part. Its result is not yet evidence of an edge:
+with about 68 trades, 4 in 20 random-walk runs reach a profit factor of 1.2 too.
+It needs a longer forward test before any money goes on it.
 
 See [docs/DESIGN.md](docs/DESIGN.md) for the reasoning.

@@ -14,7 +14,7 @@ from dataclasses import asdict, dataclass
 import numpy as np
 import pandas as pd
 
-from . import consensus, risk, strategies
+from . import consensus, data, risk, strategies
 from .indicators import atr
 
 
@@ -42,10 +42,50 @@ class Trade:
 
 
 def signals(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+    tf = cfg["signal"].get("timeframe")
+    if tf:
+        return _resampled_signals(df, cfg, tf)
     v = strategies.votes(df, cfg["strategies"])
     sig = consensus.combine(v, cfg["signal"]["min_agree"], cfg["signal"]["size_by_agreement"])
     sig["atr"] = atr(df, cfg["exits"]["atr_period"])
     return sig.join(v)
+
+
+def _resampled_signals(df: pd.DataFrame, cfg: dict, tf: str) -> pd.DataFrame:
+    """Votes and ATR on `tf` bars (e.g. daily), mapped back onto the execution bars.
+
+    A `tf` bar only counts once it has fully closed: its values are used from the first
+    execution bar of the NEXT period, so a still-forming daily bar never leaks in.
+    """
+    slow = data.resample(df, tf)
+    v = strategies.votes(slow, cfg["strategies"])
+    sig = consensus.combine(v, cfg["signal"]["min_agree"], cfg["signal"]["size_by_agreement"])
+    sig["atr"] = atr(slow, cfg["exits"]["atr_period"])
+    sig = sig.join(v).drop(columns="fire")
+    sig.index = sig.index + pd.Timedelta(tf)
+
+    period = pd.DataFrame({"period": df.index.floor(tf)}, index=df.index)
+    mapped = pd.merge_asof(period, sig.rename_axis("period").reset_index(), on="period")
+    mapped.index = df.index
+    mapped = mapped.drop(columns="period")
+    for col in ("direction", "agree", *v.columns):
+        mapped[col] = mapped[col].fillna(0).astype(int)
+    mapped["size"] = mapped["size"].fillna(0.0)
+    mapped["agreeing"] = mapped["agreeing"].fillna("")
+
+    # Same "fresh state" rule as consensus.combine, applied on the execution bars.
+    d, a = mapped["direction"], mapped["agree"]
+    fresh = (d != 0) & ((d != d.shift(fill_value=0)) | (a > a.shift(fill_value=0)))
+    mapped["fire"] = fresh & (mapped["size"] > 0)
+    return mapped
+
+
+def max_bars(df: pd.DataFrame, exits: dict) -> int:
+    """Time stop in bars. `max_days` (if set) adapts to how many bars a market has per day."""
+    if exits.get("max_days"):
+        per_day = df.groupby(df.index.floor("D")).size().median()
+        return max(1, int(exits["max_days"] * per_day))
+    return exits["max_bars"]
 
 
 def run_instrument(df: pd.DataFrame, inst: dict, cfg: dict) -> list[Trade]:
@@ -56,6 +96,7 @@ def run_instrument(df: pd.DataFrame, inst: dict, cfg: dict) -> list[Trade]:
     swap_annual = inst.get("swap_annual", 0.0)
     leverage = inst.get("leverage", 1)
 
+    hold = max_bars(df, exits)
     o, h, l, c = (df[k].to_numpy() for k in ("open", "high", "low", "close"))
     times = df.index
     fire, direction = sig["fire"].to_numpy(), sig["direction"].to_numpy()
@@ -80,7 +121,7 @@ def run_instrument(df: pd.DataFrame, inst: dict, cfg: dict) -> list[Trade]:
         trail_atr = exits.get("trail_atr", 0) or 0
         best = entry
         exit_idx, exit_raw, reason = None, None, None
-        for j in range(e, min(n, e + exits["max_bars"])):
+        for j in range(e, min(n, e + hold)):
             hit_stop = l[j] <= stop if d == 1 else h[j] >= stop
             hit_target = target is not None and (h[j] >= target if d == 1 else l[j] <= target)
             if hit_stop:
@@ -100,7 +141,7 @@ def run_instrument(df: pd.DataFrame, inst: dict, cfg: dict) -> list[Trade]:
                 trail = best - d * trail_atr * atr_v[j]
                 stop = max(stop, trail) if d == 1 else min(stop, trail)
         if exit_idx is None:
-            exit_idx = min(n - 1, e + exits["max_bars"] - 1)
+            exit_idx = min(n - 1, e + hold - 1)
             exit_raw, reason = c[exit_idx], "time"
 
         exit_price = exit_raw * (1 - d * half_spread)

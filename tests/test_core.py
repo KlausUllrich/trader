@@ -31,6 +31,33 @@ def test_no_lookahead(bars, cfg):
     pd.testing.assert_frame_equal(full.iloc[:1000][cols], part[cols])
 
 
+def test_daily_signals_have_no_lookahead(bars, daily_cfg):
+    """A daily bar is only used once it has closed, so a partial day changes nothing."""
+    df = bars(24 * 400, drift=0.0002)
+    full = backtest.signals(df, daily_cfg)
+    for end in (24 * 300, 24 * 300 + 7, 24 * 300 + 23):
+        part = backtest.signals(df.iloc[:end], daily_cfg)
+        cols = ["direction", "agree", "fire", "atr"]
+        pd.testing.assert_frame_equal(full.iloc[:end][cols], part[cols])
+
+
+def test_daily_signals_fire_at_most_once_per_day(bars, daily_cfg):
+    df = bars(24 * 400, drift=0.0002)
+    sig = backtest.signals(df, daily_cfg)
+    fired = sig.index[sig["fire"]]
+    assert len(fired) > 0
+    assert fired.floor("D").is_unique
+    assert (fired.hour == 0).all()  # first hourly bar after the daily close
+
+
+def test_max_days_adapts_to_bars_per_day(bars):
+    hourly = bars(24 * 10)
+    assert backtest.max_bars(hourly, {"max_days": 15, "max_bars": 48}) == 15 * 24
+    assert backtest.max_bars(hourly, {"max_bars": 48}) == 48
+    session = hourly[hourly.index.hour.isin(range(14, 21))]  # 7 bars a day, like US stocks
+    assert backtest.max_bars(session, {"max_days": 15}) == 15 * 7
+
+
 def test_uptrend_makes_money_without_costs(bars, cfg):
     df = bars(3000, drift=0.0008, vol=0.003)
     inst = {"name": "T", "spread_bps": 0, "leverage": 20}

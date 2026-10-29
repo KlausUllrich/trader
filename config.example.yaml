@@ -12,17 +12,23 @@ account:
 timeframe: 1h
 
 signal:
+  # The strategies vote on DAILY bars; the scan still runs every hour and a signal is
+  # sent on the first hourly bar after a daily close changes the consensus. On 1h bars
+  # the same rules had no edge before costs (out-of-sample profit factor 0.84).
+  # Remove this line to vote on the 1h bars again.
+  timeframe: 1d
   # How many of the 3 strategies must agree, and the size for each level.
   # 3 agree -> full size; 2 agree and none opposes -> half size.
   min_agree: 2
   size_by_agreement: {3: 1.0, 2: 0.5}
 
 exits:
-  atr_period: 14
+  atr_period: 14       # ATR on the signal timeframe (daily ATR with timeframe: 1d)
   stop_atr: 2.0        # stop loss distance in ATR
   target_atr: 3.0      # take profit distance in ATR (0 = no fixed target)
   trail_atr: 0.0       # trailing stop in ATR (0 = off)
-  max_bars: 48         # time stop: close after this many bars
+  max_days: 15         # time stop in days (overrides max_bars; markets have different bars per day)
+  max_bars: 48         # time stop in bars, used when max_days is not set
 
 strategies:
   trend:     {fast: 50, slow: 200}
