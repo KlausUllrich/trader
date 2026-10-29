@@ -1,0 +1,9 @@
+[Unit]
+Description=Run the trade signal scan shortly after every hourly bar closes
+
+[Timer]
+OnCalendar=*-*-* *:01:30
+Persistent=true
+
+[Install]
+WantedBy=timers.target

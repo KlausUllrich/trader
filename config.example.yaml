@@ -1,0 +1,61 @@
+# Copy to config.yaml and adjust. All costs are ESTIMATES of ActivTrades
+# conditions; check the real spreads and swaps in your demo account
+# (MT5: right-click symbol -> Specification) and correct them here.
+
+account:
+  capital: 10000          # starting balance in USD
+  max_drawdown: 5000      # hard stop: stop trading signals beyond this loss
+  risk_per_trade: 0.01    # fraction of capital risked on a full-size signal
+  max_open_positions: 4   # across all instruments
+  daily_loss_limit: 0.03  # no new signals after losing this fraction in a day
+
+timeframe: 1h
+
+signal:
+  # How many of the 3 strategies must agree, and the size for each level.
+  # 3 agree -> full size; 2 agree and none opposes -> half size.
+  min_agree: 2
+  size_by_agreement: {3: 1.0, 2: 0.5}
+
+exits:
+  atr_period: 14
+  stop_atr: 2.0        # stop loss distance in ATR
+  target_atr: 3.0      # take profit distance in ATR (0 = no fixed target)
+  trail_atr: 0.0       # trailing stop in ATR (0 = off)
+  max_bars: 48         # time stop: close after this many bars
+
+strategies:
+  trend:     {fast: 50, slow: 200}
+  breakout:  {lookback: 20, recent: 5, roc_period: 24}
+  pullback:  {rsi_period: 14, low: 40, high: 60, recent: 3}
+
+backtest:
+  out_of_sample: 0.3   # last 30% of each series is held out
+
+# source: yahoo (yfinance), ccxt (crypto exchange), or csv (e.g. MT5 export)
+# spread_bps: round-trip cost charged as a spread, in basis points of price
+# commission: per-side commission as a fraction of notional (share CFDs)
+# swap_annual: overnight financing as an annual fraction of notional
+# leverage: ESMA retail cap at ActivTrades
+instruments:
+  # Commodities
+  - {name: GOLD,    source: yahoo, symbol: "GC=F", spread_bps: 1.5, swap_annual: 0.06, leverage: 20}
+  - {name: SILVER,  source: yahoo, symbol: "SI=F", spread_bps: 6,   swap_annual: 0.06, leverage: 10}
+  - {name: BRENT,   source: yahoo, symbol: "BZ=F", spread_bps: 8,   swap_annual: 0.06, leverage: 10}
+  - {name: NATGAS,  source: yahoo, symbol: "NG=F", spread_bps: 15,  swap_annual: 0.06, leverage: 10}
+  # US tech
+  - {name: USA100,  source: yahoo, symbol: "NQ=F", spread_bps: 1.5, swap_annual: 0.07, leverage: 20}
+  - {name: NVDA,    source: yahoo, symbol: "NVDA", spread_bps: 3, commission: 0.0005, swap_annual: 0.07, leverage: 5}
+  - {name: MSFT,    source: yahoo, symbol: "MSFT", spread_bps: 3, commission: 0.0005, swap_annual: 0.07, leverage: 5}
+  - {name: AAPL,    source: yahoo, symbol: "AAPL", spread_bps: 3, commission: 0.0005, swap_annual: 0.07, leverage: 5}
+  # Crypto
+  - {name: BTCUSD,  source: ccxt, exchange: binance, symbol: "BTC/USDT", spread_bps: 10, swap_annual: 0.20, leverage: 2}
+  - {name: ETHUSD,  source: ccxt, exchange: binance, symbol: "ETH/USDT", spread_bps: 15, swap_annual: 0.20, leverage: 2}
+  - {name: SOLUSD,  source: ccxt, exchange: binance, symbol: "SOL/USDT", spread_bps: 30, swap_annual: 0.20, leverage: 2}
+  # Exact broker prices: export history from the ActivTrades MT5 demo to CSV
+  # - {name: GOLD_AT, source: csv, path: data/GOLD_H1.csv, spread_bps: 1.5, swap_annual: 0.06, leverage: 20}
+
+notify:
+  # Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in the environment (or .env)
+  telegram: true
+  console: true

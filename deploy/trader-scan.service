@@ -1,0 +1,8 @@
+[Unit]
+Description=Trade signal scan (signals only)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/trader
+ExecStart=%h/trader/.venv/bin/trader scan
