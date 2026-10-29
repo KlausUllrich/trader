@@ -65,7 +65,7 @@ def fetch(code: str, report: str = "disagg") -> pd.DataFrame:
         "spec_net": (num(FIELDS[report]["spec"][0]) - num(FIELDS[report]["spec"][1])) / oi,
         "hedge_net": (num(FIELDS[report]["hedge"][0]) - num(FIELDS[report]["hedge"][1])) / oi,
     })
-    out.index = pd.to_datetime(raw["report_date_as_yyyy_mm_dd"], utc=True)
+    out.index = pd.DatetimeIndex(pd.to_datetime(raw["report_date_as_yyyy_mm_dd"], utc=True)).as_unit("ns")
     # A contract can be listed under several names over the years; keep one row per date.
     return out[~out.index.duplicated(keep="last")].sort_index().dropna()
 
@@ -74,7 +74,7 @@ def load(code: str, report: str = "disagg", refresh: bool = False) -> pd.DataFra
     cache = CACHE_DIR / f"COT_{report}_{code}.csv"
     if cache.is_file() and not refresh:
         df = pd.read_csv(cache, index_col=0)
-        df.index = pd.to_datetime(df.index, utc=True)
+        df.index = pd.to_datetime(df.index, utc=True).as_unit("ns")
         return df
     df = fetch(code, report)
     CACHE_DIR.mkdir(parents=True, exist_ok=True)

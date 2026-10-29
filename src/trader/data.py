@@ -25,8 +25,8 @@ def _normalise(df: pd.DataFrame) -> pd.DataFrame:
     if "volume" not in df.columns:
         df["volume"] = 0.0
     df = df[COLUMNS].astype(float)
-    idx = pd.to_datetime(df.index, utc=True)
-    df.index = idx
+    # One time resolution everywhere, or merges between sources fail.
+    df.index = pd.to_datetime(df.index, utc=True).as_unit("ns")
     df = df[~df.index.duplicated(keep="last")].sort_index()
     return df.dropna(subset=["open", "high", "low", "close"])
 

@@ -125,4 +125,10 @@ Chart patterns (`research/chart_daily.py`, 2010-2017): an objective Elliott wave
 candle" (opposite colour, body bigger than the previous range) PF 0.91 over 543; weekly
 support/resistance breaks with weekly trend PF 0.95 over 346.
 
+Constellation search (`research/constellations.py`): 34 conditions, every combination of up
+to 3, long and short (13,158 tests) on 2010-2017. Hit = 2 ATR in your favour before 2 ATR
+against, within 10 days (base rate about 37%). None passed the significance bar. The best,
+a 20-day breakout while volatility is low (ATR14 < 0.75 x ATR100), hit 68% over 50 events;
+checked once on 2018-2023 it hit 40% over 55 events, against a base of 36%.
+
 See [docs/DESIGN.md](docs/DESIGN.md) for the reasoning.
