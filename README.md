@@ -22,6 +22,8 @@ Everything is in `config.example.yaml`.
 
 ## Setup
 
+Linux / macOS:
+
 ```bash
 git clone https://github.com/KlausUllrich/trader.git ~/trader && cd ~/trader
 python -m venv .venv && source .venv/bin/activate
@@ -30,6 +32,21 @@ cp config.example.yaml config.yaml   # then adjust
 cp .env.example .env                 # Telegram bot token and chat id
 pytest
 ```
+
+Windows (cmd). Note the double quotes, cmd does not understand single quotes:
+
+```bat
+git clone https://github.com/KlausUllrich/trader.git C:\Projects\trader
+cd C:\Projects\trader
+python -m venv .venv
+.venv\Scripts\activate
+pip install -e ".[dev]"
+copy config.example.yaml config.yaml
+copy .env.example .env
+pytest
+```
+
+In PowerShell, activate with `.venv\Scripts\Activate.ps1` instead.
 
 ## Use
 
@@ -49,6 +66,10 @@ To run the scan every hour on Manjaro (or any systemd Linux):
 mkdir -p ~/.config/systemd/user && cp deploy/trader-scan.* ~/.config/systemd/user/
 systemctl --user daemon-reload && systemctl --user enable --now trader-scan.timer
 ```
+
+On Windows, either leave `trader watch` running in a terminal, or create an hourly
+Task Scheduler job that runs `C:\Projects\trader\.venv\Scripts\trader.exe scan` with
+`C:\Projects\trader` as the start folder.
 
 ## Data
 
