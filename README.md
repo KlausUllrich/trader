@@ -138,4 +138,11 @@ are weak (correlations of 0.12 or less). Combining each group's 10 best with the
 cross-market ones made the hit rate worse, not better. All 9 group picks, checked once on
 2018-2023, fell back to near the base rate.
 
+Volatility (`research/volatility.py`, `research/volatility_hourly.py`): the size of the next
+10 days' moves is predictable (rank correlation 0.77 on untouched 2000-2009, 0.72 on
+2018-2023; ATR(14) alone gets 0.76 and 0.70). Of the days flagged "big move expected", 71-81%
+really were in the top 20%. But a direction-free breakout with a small stop (orders 0.5 ATR
+away, stop 0.5 ATR, target 2 ATR) loses: replayed on 1h bars it won 22% of 758 trades on
+those days, PF 0.64 (0.70 on every day).
+
 See [docs/DESIGN.md](docs/DESIGN.md) for the reasoning.
