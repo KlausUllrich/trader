@@ -116,4 +116,8 @@ profit factor 0.81, so the result above was most likely luck. Adding the CFTC la
 positioning as a 4th vote (`research/cot_daily.py`) only lifted it to 0.89, so that vote is
 off by default. 2018-2023 has not been looked at yet and is kept for the next idea.
 
+Trading jumpy markets (`research/jumpy_daily.py`, 2010-2017, 3x spread when jumpy): a 20-day
+breakout on every day had a profit factor of 0.92. Taking it only when ATR(14) > 1.5 x ATR(100)
+gave just 16 trades in 8 years (PF 0.94), and fading oil spikes gave 6 trades (PF 0.38).
+
 See [docs/DESIGN.md](docs/DESIGN.md) for the reasoning.
