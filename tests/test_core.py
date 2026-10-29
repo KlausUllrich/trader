@@ -140,3 +140,44 @@ def test_read_mt5_csv(tmp_path):
     df = data.read_csv(str(p))
     assert list(df.columns) == data.COLUMNS
     assert len(df) == 2 and df["close"].iloc[-1] == 2626.2
+
+
+def test_cot_report_is_only_used_after_release():
+    from trader import cot
+
+    dates = pd.date_range("2024-01-02", periods=10, freq="7D", tz="UTC")  # Tuesdays
+    votes = pd.Series([1, -1] * 5, index=dates)
+    bars = pd.date_range("2024-01-01", "2024-03-20", freq="1h", tz="UTC")
+    v = cot.align(votes, bars, available_after_days=7)
+    assert (v[bars < dates[0] + pd.Timedelta(days=7)] == 0).all()
+    assert v[dates[0] + pd.Timedelta(days=7)] == 1
+    assert v[dates[1] + pd.Timedelta(days=7) - pd.Timedelta(hours=1)] == 1
+    assert v[dates[1] + pd.Timedelta(days=7)] == -1
+
+
+def test_cot_vote_rules():
+    from trader import cot
+
+    idx = pd.date_range("2020-01-07", periods=200, freq="7D", tz="UTC")
+    spec = pd.Series(np.r_[np.linspace(0, 1, 100), np.linspace(1, 0, 100)], index=idx)
+    df = pd.DataFrame({"spec_net": spec, "hedge_net": -spec})
+    follow = cot.weekly_vote(df, "follow", weeks=4, min_change=0.02)
+    assert follow.iloc[50] == 1 and follow.iloc[150] == -1
+    hedgers = cot.weekly_vote(df, "hedgers", lookback=156, extreme=0.2)
+    assert hedgers.iloc[99] == -1 and hedgers.iloc[199] == 1  # specs at a high = hedgers at a low
+
+
+def test_whale_wallets_and_stance():
+    from trader import whales
+
+    def row(addr, acct, month, all_time):
+        return {"ethAddress": addr, "accountValue": str(acct),
+                "windowPerformances": [["month", {"pnl": str(month)}], ["allTime", {"pnl": str(all_time)}]]}
+
+    rows = [row("a", 5e5, 10, 1), row("b", 5e5, 30, 1), row("small", 1e3, 99, 1),
+            row("loser", 5e5, 50, -1), row("c", 5e5, 20, 1)]
+    assert whales.pick_wallets(rows, top=2, min_account=1e5) == ["b", "c"]
+    books = [{"BTC": 10.0}, {"BTC": 5.0}, {"BTC": -1.0}, {"ETH": 3.0}, {"BTC": 2.0}]
+    s = whales.stance(books, "BTC", threshold=0.6, min_wallets=3)
+    assert (s["n_long"], s["n_short"], s["vote"]) == (3, 1, 1)
+    assert whales.stance(books, "ETH", 0.6, 3)["vote"] == 0  # too few wallets hold it

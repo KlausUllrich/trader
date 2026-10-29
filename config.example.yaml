@@ -34,6 +34,9 @@ strategies:
   trend:     {fast: 50, slow: 200}
   breakout:  {lookback: 20, recent: 5, roc_period: 24}
   pullback:  {rsi_period: 14, low: 40, high: 60, recent: 3}
+  # Large traders' positioning as a 4th vote, for instruments with a `cot` contract.
+  # Off: on 2010-2017 daily data it raised the profit factor only from 0.81 to 0.89.
+  # cot:     {rule: follow, weeks: 4, min_change: 0.02}
 
 backtest:
   out_of_sample: 0.3   # last 30% of each series is held out
@@ -45,21 +48,29 @@ backtest:
 # leverage: ESMA retail cap at ActivTrades
 instruments:
   # Commodities
-  - {name: GOLD,    source: yahoo, symbol: "GC=F", spread_bps: 1.5, swap_annual: 0.06, leverage: 20}
-  - {name: SILVER,  source: yahoo, symbol: "SI=F", spread_bps: 6,   swap_annual: 0.06, leverage: 10}
-  - {name: BRENT,   source: yahoo, symbol: "BZ=F", spread_bps: 8,   swap_annual: 0.06, leverage: 10}
-  - {name: NATGAS,  source: yahoo, symbol: "NG=F", spread_bps: 15,  swap_annual: 0.06, leverage: 10}
+  # cot: CFTC Commitments of Traders contract for the large-trader vote (see cot.py)
+  - {name: GOLD,    source: yahoo, symbol: "GC=F", cot: {code: "088691"}, spread_bps: 1.5, swap_annual: 0.06, leverage: 20}
+  - {name: SILVER,  source: yahoo, symbol: "SI=F", cot: {code: "084691"}, spread_bps: 6,   swap_annual: 0.06, leverage: 10}
+  - {name: BRENT,   source: yahoo, symbol: "BZ=F", cot: {code: "067651"}, spread_bps: 8,   swap_annual: 0.06, leverage: 10}
+  - {name: NATGAS,  source: yahoo, symbol: "NG=F", cot: {code: "023651"}, spread_bps: 15,  swap_annual: 0.06, leverage: 10}
   # US tech
-  - {name: USA100,  source: yahoo, symbol: "NQ=F", spread_bps: 1.5, swap_annual: 0.07, leverage: 20}
+  - {name: USA100,  source: yahoo, symbol: "NQ=F", cot: {code: "209742", report: tff}, spread_bps: 1.5, swap_annual: 0.07, leverage: 20}
   - {name: NVDA,    source: yahoo, symbol: "NVDA", spread_bps: 3, commission: 0.0005, swap_annual: 0.07, leverage: 5}
   - {name: MSFT,    source: yahoo, symbol: "MSFT", spread_bps: 3, commission: 0.0005, swap_annual: 0.07, leverage: 5}
   - {name: AAPL,    source: yahoo, symbol: "AAPL", spread_bps: 3, commission: 0.0005, swap_annual: 0.07, leverage: 5}
   # Crypto
-  - {name: BTCUSD,  source: ccxt, exchange: binance, symbol: "BTC/USDT", spread_bps: 10, swap_annual: 0.20, leverage: 2}
-  - {name: ETHUSD,  source: ccxt, exchange: binance, symbol: "ETH/USDT", spread_bps: 15, swap_annual: 0.20, leverage: 2}
-  - {name: SOLUSD,  source: ccxt, exchange: binance, symbol: "SOL/USDT", spread_bps: 30, swap_annual: 0.20, leverage: 2}
+  - {name: BTCUSD,  source: ccxt, exchange: binance, symbol: "BTC/USDT", whales: BTC, spread_bps: 10, swap_annual: 0.20, leverage: 2}
+  - {name: ETHUSD,  source: ccxt, exchange: binance, symbol: "ETH/USDT", whales: ETH, spread_bps: 15, swap_annual: 0.20, leverage: 2}
+  - {name: SOLUSD,  source: ccxt, exchange: binance, symbol: "SOL/USDT", whales: SOL, spread_bps: 30, swap_annual: 0.20, leverage: 2}
   # Exact broker prices: export history from the ActivTrades MT5 demo to CSV
   # - {name: GOLD_AT, source: csv, path: data/GOLD_H1.csv, spread_bps: 1.5, swap_annual: 0.06, leverage: 20}
+
+# Top Hyperliquid traders' stance on BTC/ETH/SOL, recorded every scan to
+# data/whales.csv and shown in crypto signals. Not a vote until it can be backtested.
+whales:
+  top: 50              # best wallets by last month's profit (and profitable all time)
+  min_account: 100000  # USD
+  threshold: 0.6       # share of wallets on one side to call it long or short
 
 notify:
   # Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in the environment (or .env)

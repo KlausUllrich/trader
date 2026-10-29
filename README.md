@@ -57,6 +57,7 @@ trader fetch       # download and cache 1h history
 trader backtest    # in-sample vs out-of-sample report with costs, plus a PASS/FAIL verdict
 trader scan        # check the last closed bar once, send any new signals
 trader watch       # scan after every bar close, forever
+trader whales      # record and show what the top Hyperliquid traders hold
 ```
 
 `trader backtest` writes `reports/trades.csv` and `reports/summary.json`. The live
@@ -109,5 +110,10 @@ Daily voting was picked from five ideas tested on the in-sample part only, then
 checked once on the held-out part. Its result is not yet evidence of an edge:
 with about 68 trades, 4 in 20 random-walk runs reach a profit factor of 1.2 too.
 It needs a longer forward test before any money goes on it.
+
+On 2010-2017 daily data (gold, silver, oil, gas, Nasdaq) the daily voting lost money,
+profit factor 0.81, so the result above was most likely luck. Adding the CFTC large-trader
+positioning as a 4th vote (`research/cot_daily.py`) only lifted it to 0.89, so that vote is
+off by default. 2018-2023 has not been looked at yet and is kept for the next idea.
 
 See [docs/DESIGN.md](docs/DESIGN.md) for the reasoning.

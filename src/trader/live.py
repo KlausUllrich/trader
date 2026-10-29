@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from . import backtest, data, notify, risk
+from . import backtest, data, notify, risk, whales
 
 STATE_FILE = Path("data/state.json")
 SUMMARY_FILE = Path("reports/summary.json")
@@ -30,7 +30,7 @@ def _load_json(path: Path) -> dict:
 
 def evaluate(df: pd.DataFrame, inst: dict, cfg: dict) -> dict | None:
     """Return a signal dict if the last bar in `df` fires, else None."""
-    sig = backtest.signals(df, cfg)
+    sig = backtest.signals(df, cfg, inst)
     last = sig.iloc[-1]
     if not last["fire"] or not last["atr"] > 0:
         return None
@@ -43,6 +43,7 @@ def evaluate(df: pd.DataFrame, inst: dict, cfg: dict) -> dict | None:
     return {
         "instrument": inst["name"], "time": df.index[-1], "direction": d,
         "agree": int(last["agree"]), "agreeing": last["agreeing"], "size": float(last["size"]),
+        "voters": sum(c in sig.columns for c in ("trend", "breakout", "pullback", "cot")),
         "entry": entry, "stop": stop, "target": target, "units": units, "risk": at_risk,
         "max_bars": backtest.max_bars(df, cfg["exits"]),
     }
@@ -52,6 +53,12 @@ def scan(cfg: dict, only: list[str] | None = None) -> list[dict]:
     state = _load_json(STATE_FILE)
     summary = _load_json(SUMMARY_FILE).get("instruments", {})
     found = []
+    crowd = {}
+    if cfg.get("whales"):
+        try:  # recorded every scan so the stance can be backtested later
+            crowd = {r["coin"]: r for r in whales.record(cfg)}
+        except Exception as exc:
+            print(f"[whales] error: {exc}")
     for inst in cfg["instruments"]:
         if only and inst["name"] not in only:
             continue
@@ -67,6 +74,8 @@ def scan(cfg: dict, only: list[str] | None = None) -> list[dict]:
         if state.get(inst["name"]) == key:
             continue
         s["stats"] = summary.get(inst["name"], {}).get("out_of_sample")
+        if inst.get("whales") in crowd:
+            s["whales"] = whales.describe(crowd[inst["whales"]])
         notify.send(notify.format_signal(s), cfg)
         state[inst["name"]] = key
         found.append(s)

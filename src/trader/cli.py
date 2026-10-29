@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 
-from . import data, live, report
+from . import data, live, report, whales
 from .config import load_config, load_dotenv
 
 
@@ -24,6 +24,7 @@ def main(argv: list[str] | None = None) -> None:
     s.add_argument("-i", "--instrument", action="append")
 
     sub.add_parser("watch", help="scan after every bar close, forever")
+    sub.add_parser("whales", help="record and show what the top Hyperliquid traders hold")
 
     args = p.parse_args(argv)
     load_dotenv()
@@ -48,6 +49,9 @@ def main(argv: list[str] | None = None) -> None:
             print("No new signals.")
     elif args.cmd == "watch":
         live.watch(cfg)
+    elif args.cmd == "whales":
+        for row in whales.record(cfg):
+            print(whales.describe(row))
 
 
 if __name__ == "__main__":

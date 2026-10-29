@@ -41,24 +41,24 @@ class Trade:
         return self.pnl / self.risk if self.risk else 0.0
 
 
-def signals(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+def signals(df: pd.DataFrame, cfg: dict, inst: dict | None = None) -> pd.DataFrame:
     tf = cfg["signal"].get("timeframe")
     if tf:
-        return _resampled_signals(df, cfg, tf)
-    v = strategies.votes(df, cfg["strategies"])
+        return _resampled_signals(df, cfg, tf, inst)
+    v = strategies.votes(df, cfg["strategies"], inst)
     sig = consensus.combine(v, cfg["signal"]["min_agree"], cfg["signal"]["size_by_agreement"])
     sig["atr"] = atr(df, cfg["exits"]["atr_period"])
     return sig.join(v)
 
 
-def _resampled_signals(df: pd.DataFrame, cfg: dict, tf: str) -> pd.DataFrame:
+def _resampled_signals(df: pd.DataFrame, cfg: dict, tf: str, inst: dict | None = None) -> pd.DataFrame:
     """Votes and ATR on `tf` bars (e.g. daily), mapped back onto the execution bars.
 
     A `tf` bar only counts once it has fully closed: its values are used from the first
     execution bar of the NEXT period, so a still-forming daily bar never leaks in.
     """
     slow = data.resample(df, tf)
-    v = strategies.votes(slow, cfg["strategies"])
+    v = strategies.votes(slow, cfg["strategies"], inst)
     sig = consensus.combine(v, cfg["signal"]["min_agree"], cfg["signal"]["size_by_agreement"])
     sig["atr"] = atr(slow, cfg["exits"]["atr_period"])
     sig = sig.join(v).drop(columns="fire")
@@ -89,7 +89,7 @@ def max_bars(df: pd.DataFrame, exits: dict) -> int:
 
 
 def run_instrument(df: pd.DataFrame, inst: dict, cfg: dict) -> list[Trade]:
-    sig = signals(df, cfg)
+    sig = signals(df, cfg, inst)
     exits, acct = cfg["exits"], cfg["account"]
     half_spread = inst.get("spread_bps", 0) / 2 / 10_000
     commission = inst.get("commission", 0.0)

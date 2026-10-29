@@ -47,6 +47,15 @@ def pullback(df: pd.DataFrame, rsi_period: int = 14, low: float = 40, high: floa
 REGISTRY = {"trend": trend, "breakout": breakout, "pullback": pullback}
 
 
-def votes(df: pd.DataFrame, params: dict) -> pd.DataFrame:
-    """One column per strategy with its vote on every bar."""
-    return pd.DataFrame({name: fn(df, **params.get(name, {})) for name, fn in REGISTRY.items()})
+def votes(df: pd.DataFrame, params: dict, inst: dict | None = None) -> pd.DataFrame:
+    """One column per strategy with its vote on every bar.
+
+    If `params` has a `cot` entry and the instrument has a `cot` contract, the large
+    traders' positioning (see cot.py) votes as a fourth strategy.
+    """
+    out = pd.DataFrame({name: fn(df, **params.get(name, {})) for name, fn in REGISTRY.items()})
+    if "cot" in params and inst and inst.get("cot"):
+        from . import cot
+
+        out["cot"] = cot.strategy(df, inst, **params["cot"])
+    return out

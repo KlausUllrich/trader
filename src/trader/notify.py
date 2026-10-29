@@ -11,7 +11,7 @@ def format_signal(s: dict) -> str:
     side = "LONG" if s["direction"] == 1 else "SHORT"
     size = "full size" if s["size"] >= 1 else f"{s['size']:.0%} size"
     lines = [
-        f"{side} {s['instrument']} ({size}, {s['agree']}/3 agree: {s['agreeing']})",
+        f"{side} {s['instrument']} ({size}, {s['agree']}/{s.get('voters', 3)} agree: {s['agreeing']})",
         f"Bar closed: {s['time']:%Y-%m-%d %H:%M} UTC",
         f"Entry ~ {s['entry']:.5g}",
         f"Stop    {s['stop']:.5g}",
@@ -26,6 +26,8 @@ def format_signal(s: dict) -> str:
             f"Backtest (out of sample): {st['trades']} trades, win {st['win_rate']:.0%}, "
             f"PF {st['profit_factor']:.2f}, avg {st['avg_r']:+.2f}R"
         )
+    if s.get("whales"):
+        lines.append(s["whales"] + " (info only, not a vote yet)")
     lines.append("Signal only. Check spread and news before placing it.")
     return "\n".join(lines)
 
