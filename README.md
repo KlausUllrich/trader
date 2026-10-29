@@ -131,4 +131,11 @@ against, within 10 days (base rate about 37%). None passed the significance bar.
 a 20-day breakout while volatility is low (ATR14 < 0.75 x ATR100), hit 68% over 50 events;
 checked once on 2018-2023 it hit 40% over 55 events, against a base of 36%.
 
+Per market group and across markets (`research/groups.py`): split into energy, metals, US
+tech and crypto, adding 28 conditions from moves in Nasdaq, Bitcoin, oil, gold, silver,
+10-year Treasuries and the US dollar. No group gave a stronger signal, and lead-lag links
+are weak (correlations of 0.12 or less). Combining each group's 10 best with the 10 best
+cross-market ones made the hit rate worse, not better. All 9 group picks, checked once on
+2018-2023, fell back to near the base rate.
+
 See [docs/DESIGN.md](docs/DESIGN.md) for the reasoning.

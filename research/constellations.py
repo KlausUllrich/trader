@@ -189,7 +189,7 @@ def declustered(idx, gap=HORIZON):
     return taken
 
 
-def mine(markets, combos, n_tested):
+def mine(markets, combos, n_tested, min_events=50, min_markets=3):
     rows = []
     for d in (1, -1):
         base = {m: np.nanmean(o[d][np.isfinite(o[d])] == 1.0) for m, (_, o) in markets.items()}
@@ -208,7 +208,7 @@ def mine(markets, combos, n_tested):
                 rs.extend((v - np.nan_to_num(out["cost"][idx])).tolist())
                 expected += base[m] * len(idx)
             n = len(rs)
-            if n < 50 or per_market < 3:
+            if n < min_events or per_market < min_markets:
                 continue
             rate, p0 = hits / n, expected / n
             p = binom_sf(hits, n, p0)
@@ -229,41 +229,42 @@ def all_combos(names):
     return out
 
 
-start, end = PERIODS[MODE]
-markets = {i["name"]: load_market(i, start, end) for i in insts}
-names = sorted(set().union(*[set(c.columns) for c, _ in markets.values()]))
+if __name__ == "__main__":
+    start, end = PERIODS[MODE]
+    markets = {i["name"]: load_market(i, start, end) for i in insts}
+    names = sorted(set().union(*[set(c.columns) for c, _ in markets.values()]))
 
-if MODE == "is":
-    combos = all_combos(names)
-    n_tested = 2 * len(combos)
-    print(f"{len(names)} conditions, {len(combos)} combinations x 2 sides = {n_tested} tested")
-    table, survivors = mine(markets, combos, n_tested)
-    print(f"{len(table)} had enough events; {len(survivors)} survive")
-    soft = table[(table.hit_rate >= 0.6) & (table.hit_rate - table.base_rate >= 0.10) & (table.avg_r >= 0.2)]
-    print(f"{len(soft)} pass the hit-rate and R filters without the significance test")
-    pd.set_option("display.width", 220, "display.max_colwidth", 90)
-    print(table.sort_values("p").head(15).to_string(index=False))
+    if MODE == "is":
+        combos = all_combos(names)
+        n_tested = 2 * len(combos)
+        print(f"{len(names)} conditions, {len(combos)} combinations x 2 sides = {n_tested} tested")
+        table, survivors = mine(markets, combos, n_tested)
+        print(f"{len(table)} had enough events; {len(survivors)} survive")
+        soft = table[(table.hit_rate >= 0.6) & (table.hit_rate - table.base_rate >= 0.10) & (table.avg_r >= 0.2)]
+        print(f"{len(soft)} pass the hit-rate and R filters without the significance test")
+        pd.set_option("display.width", 220, "display.max_colwidth", 90)
+        print(table.sort_values("p").head(15).to_string(index=False))
 
-    rng = np.random.default_rng(7)
-    null_survivors, null_soft = [], []
-    for k in range(10):
-        shuffled = {}
-        for m, (cond, out) in markets.items():
-            shift = int(rng.integers(250, 1250)) % len(cond)
-            shuffled[m] = (cond, {d: np.roll(v, shift) for d, v in out.items()})  # cost moves with its outcome
-        t, s = mine(shuffled, combos, n_tested)
-        null_survivors.append(len(s))
-        null_soft.append(int(((t.hit_rate >= 0.6) & (t.hit_rate - t.base_rate >= 0.10) & (t.avg_r >= 0.2)).sum())
-                         if len(t) else 0)
-    print(f"shuffled copies: survivors {null_survivors}, soft passes {null_soft}")
-    SURVIVORS.write_text(json.dumps([{"side": r.side, "combo": list(r.combo)} for r in survivors.itertuples()],
-                                    indent=2))
-else:
-    picks = json.loads(SURVIVORS.read_text())
-    if not picks:
-        print("No survivors to check.")
-    for p in picks:
-        combo, d = tuple(p["combo"]), 1 if p["side"] == "long" else -1
-        t, _ = mine(markets, [combo], 1)
-        t = t[t.side == p["side"]] if len(t) else t
-        print(p, t.to_dict("records") if len(t) else "fewer than 50 events / 3 markets")
+        rng = np.random.default_rng(7)
+        null_survivors, null_soft = [], []
+        for k in range(10):
+            shuffled = {}
+            for m, (cond, out) in markets.items():
+                shift = int(rng.integers(250, 1250)) % len(cond)
+                shuffled[m] = (cond, {d: np.roll(v, shift) for d, v in out.items()})  # cost moves with its outcome
+            t, s = mine(shuffled, combos, n_tested)
+            null_survivors.append(len(s))
+            null_soft.append(int(((t.hit_rate >= 0.6) & (t.hit_rate - t.base_rate >= 0.10) & (t.avg_r >= 0.2)).sum())
+                             if len(t) else 0)
+        print(f"shuffled copies: survivors {null_survivors}, soft passes {null_soft}")
+        SURVIVORS.write_text(json.dumps([{"side": r.side, "combo": list(r.combo)} for r in survivors.itertuples()],
+                                        indent=2))
+    else:
+        picks = json.loads(SURVIVORS.read_text())
+        if not picks:
+            print("No survivors to check.")
+        for p in picks:
+            combo, d = tuple(p["combo"]), 1 if p["side"] == "long" else -1
+            t, _ = mine(markets, [combo], 1)
+            t = t[t.side == p["side"]] if len(t) else t
+            print(p, t.to_dict("records") if len(t) else "fewer than 50 events / 3 markets")
