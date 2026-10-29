@@ -1,0 +1,78 @@
+{
+  "energy": {
+    "A": {
+      "side": "long",
+      "combo": [
+        "below_ema200",
+        "cot_hedgers_bearish"
+      ]
+    },
+    "B": {
+      "side": "short",
+      "combo": [
+        "nasdaq_5d_slump",
+        "nasdaq_1d_drop"
+      ]
+    }
+  },
+  "metals": {
+    "A": {
+      "side": "long",
+      "combo": [
+        "above_weekly_resistance",
+        "stretched_up"
+      ]
+    },
+    "B": {
+      "side": "short",
+      "combo": [
+        "nasdaq_5d_slump",
+        "nasdaq_1d_drop"
+      ]
+    },
+    "C": {
+      "side": "long",
+      "combo": [
+        "above_volume_poc",
+        "above_weekly_resistance",
+        "stretched_up",
+        "silver_5d_surge"
+      ]
+    }
+  },
+  "tech": {
+    "A": {
+      "side": "long",
+      "combo": [
+        "above_ema200",
+        "above_weekly_resistance",
+        "rsi_cross_down_50"
+      ]
+    },
+    "B": {
+      "side": "long",
+      "combo": [
+        "nasdaq_5d_slump"
+      ]
+    },
+    "C": {
+      "side": "short",
+      "combo": [
+        "above_volume_poc",
+        "above_weekly_resistance",
+        "ema50_over_200",
+        "oil_1d_drop"
+      ]
+    }
+  },
+  "crypto": {
+    "A": {
+      "side": "long",
+      "combo": [
+        "above_ema200",
+        "above_volume_poc",
+        "breakout_20d_high"
+      ]
+    }
+  }
+}
