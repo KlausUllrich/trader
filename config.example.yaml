@@ -46,22 +46,23 @@ backtest:
 # commission: per-side commission as a fraction of notional (share CFDs)
 # swap_annual: overnight financing as an annual fraction of notional
 # leverage: ESMA retail cap at ActivTrades
+# group: heading the market is listed under in the app (optional)
 instruments:
   # Commodities
   # cot: CFTC Commitments of Traders contract for the large-trader vote (see cot.py)
-  - {name: GOLD,    source: yahoo, symbol: "GC=F", cot: {code: "088691"}, spread_bps: 1.5, swap_annual: 0.06, leverage: 20}
-  - {name: SILVER,  source: yahoo, symbol: "SI=F", cot: {code: "084691"}, spread_bps: 6,   swap_annual: 0.06, leverage: 10}
-  - {name: BRENT,   source: yahoo, symbol: "BZ=F", cot: {code: "067651"}, spread_bps: 8,   swap_annual: 0.06, leverage: 10}
-  - {name: NATGAS,  source: yahoo, symbol: "NG=F", cot: {code: "023651"}, spread_bps: 15,  swap_annual: 0.06, leverage: 10}
+  - {name: GOLD,    group: Commodities, source: yahoo, symbol: "GC=F", cot: {code: "088691"}, spread_bps: 1.5, swap_annual: 0.06, leverage: 20}
+  - {name: SILVER,  group: Commodities, source: yahoo, symbol: "SI=F", cot: {code: "084691"}, spread_bps: 6,   swap_annual: 0.06, leverage: 10}
+  - {name: BRENT,   group: Commodities, source: yahoo, symbol: "BZ=F", cot: {code: "067651"}, spread_bps: 8,   swap_annual: 0.06, leverage: 10}
+  - {name: NATGAS,  group: Commodities, source: yahoo, symbol: "NG=F", cot: {code: "023651"}, spread_bps: 15,  swap_annual: 0.06, leverage: 10}
   # US tech
-  - {name: USA100,  source: yahoo, symbol: "NQ=F", cot: {code: "209742", report: tff}, spread_bps: 1.5, swap_annual: 0.07, leverage: 20}
-  - {name: NVDA,    source: yahoo, symbol: "NVDA", spread_bps: 3, commission: 0.0005, swap_annual: 0.07, leverage: 5}
-  - {name: MSFT,    source: yahoo, symbol: "MSFT", spread_bps: 3, commission: 0.0005, swap_annual: 0.07, leverage: 5}
-  - {name: AAPL,    source: yahoo, symbol: "AAPL", spread_bps: 3, commission: 0.0005, swap_annual: 0.07, leverage: 5}
+  - {name: USA100,  group: US tech, source: yahoo, symbol: "NQ=F", cot: {code: "209742", report: tff}, spread_bps: 1.5, swap_annual: 0.07, leverage: 20}
+  - {name: NVDA,    group: US tech, source: yahoo, symbol: "NVDA", spread_bps: 3, commission: 0.0005, swap_annual: 0.07, leverage: 5}
+  - {name: MSFT,    group: US tech, source: yahoo, symbol: "MSFT", spread_bps: 3, commission: 0.0005, swap_annual: 0.07, leverage: 5}
+  - {name: AAPL,    group: US tech, source: yahoo, symbol: "AAPL", spread_bps: 3, commission: 0.0005, swap_annual: 0.07, leverage: 5}
   # Crypto
-  - {name: BTCUSD,  source: ccxt, exchange: binance, symbol: "BTC/USDT", whales: BTC, spread_bps: 10, swap_annual: 0.20, leverage: 2}
-  - {name: ETHUSD,  source: ccxt, exchange: binance, symbol: "ETH/USDT", whales: ETH, spread_bps: 15, swap_annual: 0.20, leverage: 2}
-  - {name: SOLUSD,  source: ccxt, exchange: binance, symbol: "SOL/USDT", whales: SOL, spread_bps: 30, swap_annual: 0.20, leverage: 2}
+  - {name: BTCUSD,  group: Crypto, source: ccxt, exchange: binance, symbol: "BTC/USDT", whales: BTC, spread_bps: 10, swap_annual: 0.20, leverage: 2}
+  - {name: ETHUSD,  group: Crypto, source: ccxt, exchange: binance, symbol: "ETH/USDT", whales: ETH, spread_bps: 15, swap_annual: 0.20, leverage: 2}
+  - {name: SOLUSD,  group: Crypto, source: ccxt, exchange: binance, symbol: "SOL/USDT", whales: SOL, spread_bps: 30, swap_annual: 0.20, leverage: 2}
   # Exact broker prices: export history from the ActivTrades MT5 demo to CSV
   # - {name: GOLD_AT, source: csv, path: data/GOLD_H1.csv, spread_bps: 1.5, swap_annual: 0.06, leverage: 20}
 

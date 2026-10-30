@@ -1,4 +1,4 @@
-"""Command line: `trader backtest`, `trader scan`, `trader watch`, `trader fetch`."""
+"""Command line: `trader backtest`, `trader scan`, `trader watch`, `trader fetch`, `trader app`."""
 
 from __future__ import annotations
 
@@ -26,6 +26,12 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser("watch", help="scan after every bar close, forever")
     sub.add_parser("whales", help="record and show what the top Hyperliquid traders hold")
 
+    a = sub.add_parser("app", help="open the dashboard in your browser")
+    a.add_argument("--host", default="127.0.0.1", help="0.0.0.0 to reach it from your phone (e.g. over Tailscale)")
+    a.add_argument("--port", type=int, default=8000)
+    a.add_argument("--demo", action="store_true", help="synthetic prices, no internet needed")
+    a.add_argument("--no-browser", action="store_true", help="don't open a browser window")
+
     args = p.parse_args(argv)
     load_dotenv()
     cfg = load_config(args.config)
@@ -52,6 +58,11 @@ def main(argv: list[str] | None = None) -> None:
     elif args.cmd == "whales":
         for row in whales.record(cfg):
             print(whales.describe(row))
+    elif args.cmd == "app":
+        from . import app
+
+        print(f"Dashboard on http://{args.host}:{args.port}  (Ctrl+C to stop)")
+        app.serve(cfg, args.host, args.port, demo=args.demo, browser=not args.no_browser)
 
 
 if __name__ == "__main__":
