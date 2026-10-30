@@ -58,6 +58,7 @@ trader backtest    # in-sample vs out-of-sample report with costs, plus a PASS/F
 trader scan        # check the last closed bar once, send any new signals
 trader watch       # scan after every bar close, forever
 trader whales      # record and show what the top Hyperliquid traders hold
+trader app         # open the dashboard in your browser
 ```
 
 `trader backtest` writes `reports/trades.csv` and `reports/summary.json`. The live
@@ -73,6 +74,30 @@ systemctl --user daemon-reload && systemctl --user enable --now trader-scan.time
 On Windows, either leave `trader watch` running in a terminal, or create an hourly
 Task Scheduler job that runs `C:\Projects\trader\.venv\Scripts\trader.exe scan` with
 `C:\Projects\trader` as the start folder.
+
+## Dashboard
+
+`trader app` starts a small web app on your own computer and opens it at
+http://127.0.0.1:8000. It works the same on Windows and Manjaro. Stop it with Ctrl+C.
+
+- **Overview**: every market with its price, the expected daily move for the next 10 days
+  (calm / normal / jumpy against its own history), how the three strategies vote now, the
+  last signal, the whales' stance for crypto, and the pre-trade check for the current consensus.
+- **Market page** (click a row): daily or 1 hour candles with EMA 50/200, consensus signals,
+  support and resistance, and the expected move over time next to what really happened.
+- **Pre-trade check** (on the market page): pick long or short and it sizes the stop and
+  target from the volatility forecast, gives the position size for 1% risk, the margin, how
+  many losses in a row the drawdown limit allows, and a checklist: strategy votes, expected
+  move, room to the next level, whales, costs, and the backtest track record. The stop, entry
+  and target are drawn on the chart.
+
+Prices come from the same cache as `trader fetch`; the **Refresh data** button downloads
+fresh bars and records a new whale snapshot. `trader app --demo` shows synthetic prices, so
+you can try it without internet.
+
+From your phone: install [Tailscale](https://tailscale.com) (free) on the PC and the phone,
+start `trader app --host 0.0.0.0`, and open `http://<pc-name>:8000` on the phone. The app has
+no login, so only do this on a private network like Tailscale, never on an open port.
 
 ## Data
 
